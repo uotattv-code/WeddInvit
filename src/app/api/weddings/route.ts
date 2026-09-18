@@ -21,7 +21,11 @@ export async function GET() {
 
     return NextResponse.json(weddings);
   } catch (error: any) {
-    return NextResponse.json({ error: "Lỗi lấy danh sách thiệp" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Lỗi lấy danh sách thiệp", 
+      detail: error?.message || String(error),
+      hasDbUrl: !!process.env.DATABASE_URL 
+    }, { status: 500 });
   }
 }
 
