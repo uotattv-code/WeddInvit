@@ -1,0 +1,130 @@
+// Prisma schema for Weddinvit Online Wedding SaaS
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String
+  role      String    @default("CUSTOMER") // ADMIN | CUSTOMER
+  password  String    @default("demo123")
+  weddings  Wedding[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Template {
+  id            String    @id
+  name          String
+  slug          String    @unique
+  thumbnail     String
+  description   String
+  category      String
+  defaultTheme  String    // JSON string: colors, fonts, styles
+  defaultBlocks String    // JSON string: array of block configs
+  weddings      Wedding[]
+}
+
+model Wedding {
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  title           String
+  groomName       String
+  brideName       String
+  groomShortName  String?
+  brideShortName  String?
+  weddingDate     DateTime
+  weddingTime     String?
+  venueName       String
+  venueAddress    String
+  mapUrl          String?
+  coverImage      String?
+  musicUrl        String?
+  musicTitle      String?
+  isMusicAutoPlay Boolean           @default(false)
+  status          String            @default("DRAFT") // DRAFT | PUBLISHED
+  publishedAt     DateTime?
+  themeConfig     String            // JSON string: { primaryColor, accentColor, fontHeading, fontBody... }
+  customCss       String?
+  
+  templateId      String
+  template        Template          @relation(fields: [templateId], references: [id])
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  
+  blocks          WeddingBlock[]
+  events          WeddingEvent[]
+  galleryImages   GalleryImage[]
+  rsvps           Rsvp[]
+  guestbooks      GuestbookMessage[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model WeddingBlock {
+  id        String   @id @default(cuid())
+  weddingId String
+  wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  type      String   // hero | couple | story | countdown | events | gallery | family | map | rsvp | guestbook | music | thank_you
+  order     Int
+  enabled   Boolean  @default(true)
+  title     String?
+  subtitle  String?
+  content   String   // JSON configuration for this specific block
+  layout    String   @default("default") // layout variant
+  style     String?  // custom style JSON
+}
+
+model WeddingEvent {
+  id          String   @id @default(cuid())
+  weddingId   String
+  wedding     Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  title       String   // Lễ Vu Quy, Lễ Thành Hôn, Tiệc Cưới...
+  time        String   // 09:00 - 11:00
+  date        DateTime
+  location    String
+  address     String
+  description String?
+  order       Int      @default(0)
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  weddingId String
+  wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  isCover   Boolean  @default(false)
+}
+
+model Rsvp {
+  id           String   @id @default(cuid())
+  weddingId    String
+  wedding      Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  guestName    String
+  phone        String?
+  guestCount   Int      @default(1)
+  isAttending  Boolean  @default(true)
+  side         String?  // GROOM | BRIDE
+  message      String?
+  createdAt    DateTime @default(now())
+}
+
+model GuestbookMessage {
+  id        String   @id @default(cuid())
+  weddingId String
+  wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name      String
+  message   String
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
